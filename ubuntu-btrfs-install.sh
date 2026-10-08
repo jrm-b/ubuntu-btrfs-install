@@ -89,26 +89,26 @@ ajusta_fstab() {
     root_uuid=$(blkid --output export /dev/"$rootdev" | grep ^UUID=)
     fstab_path="$mp/etc/fstab"
 
-    sed -i "/ btrfs /d" "$fstab_path"
-    sed -i "/ swap /d" "$fstab_path"
+    # The installer's swap file (/swap.img) is now inside @, and btrfs refuses
+    # to snapshot a subvolume holding an active swap file: remove it.
+    # Swap partitions are kept.
+    awk '$3 == "swap" && $1 ~ /^\// && $1 !~ /^\/dev\// { print $1 }' "$fstab_path" |
+        while read -r swapfile; do rm -f "$mp$swapfile"; done
 
-    declare -A mountpoints=(
-        [@]="/"
-        [@home]="/home"
-        [@log]="/var/log"
-        [@cache]="/var/cache"
-        [@libvirt]="/var/lib/libvirt"
-        [@flatpak]="/var/lib/flatpak"
-        [@docker]="/var/lib/docker"
-        [@containers]="/var/lib/containers"
-        [@machines]="/var/lib/machines"
-        [@var_tmp]="/var/tmp"
-        [@tmp]="/tmp"
-        [@opt]="/opt"
-    )
+    # Drop the installer entries rewritten below. Match on fields, not on
+    # spaces: the installer separates the swap line with tabs.
+    awk '
+        /^[ \t]*#/ { print; next }
+        $3 == "btrfs" || $2 == "/boot" || $2 == "/boot/efi" { next }
+        $3 == "swap" && $1 ~ /^\// && $1 !~ /^\/dev\// { next }
+        { print }
+    ' "$fstab_path" > "$fstab_path.new"
+    mv "$fstab_path.new" "$fstab_path"
 
-    for subvol in "${!mountpoints[@]}"; do
-        echo "$root_uuid ${mountpoints[$subvol]} btrfs defaults,ssd,discard=async,noatime,space_cache=v2,compress=zstd:1,subvol=$subvol 0 0" >> "$fstab_path"
+    opts="defaults,ssd,discard=async,noatime,space_cache=v2,compress=zstd:1"
+    echo "$root_uuid / btrfs $opts,subvol=@ 0 0" >> "$fstab_path"
+    for entry in "${subvols[@]}"; do
+        echo "$root_uuid ${entry#*:} btrfs $opts,subvol=${entry%%:*} 0 0" >> "$fstab_path"
     done
 
     boot_uuid=$(blkid --output export /dev/"$bootdev" | grep ^UUID=)
