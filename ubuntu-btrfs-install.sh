@@ -66,11 +66,18 @@ create_subvols() {
         mountdir=@${entry#*:}
 
         btrfs subvolume create "$subvol"
-        mkdir -p "$subvol"
-    done
 
-    [ -d var/log ] && mv var/log/* @log/ 2>/dev/null || true
-    [ -d var/cache ] && mv var/cache/* @cache/ 2>/dev/null || true
+        if [ -d "$mountdir" ]; then
+            # Keep the original owner and mode (/tmp is 1777, /var/log is root:syslog 0775)
+            chown --reference="$mountdir" "$subvol"
+            chmod --reference="$mountdir" "$subvol"
+            # Move the installed data, hidden files included, into the subvolume.
+            # The emptied directory stays in @ as the mount point.
+            find "$mountdir" -mindepth 1 -maxdepth 1 -exec mv -t "$subvol" {} +
+        else
+            mkdir -p "$mountdir"
+        fi
+    done
 
     cd /
     umount "$mp"
