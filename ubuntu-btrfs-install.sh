@@ -12,6 +12,21 @@ scriptname=$(basename "$script")
 
 mp=/mnt/root
 
+# Subvolumes and their mount points (@ for / is handled separately)
+subvols=(
+    @home:/home
+    @log:/var/log
+    @cache:/var/cache
+    @tmp:/tmp
+    @libvirt:/var/lib/libvirt
+    @flatpak:/var/lib/flatpak
+    @docker:/var/lib/docker
+    @containers:/var/lib/containers
+    @machines:/var/lib/machines
+    @var_tmp:/var/tmp
+    @opt:/opt
+)
+
 show_help() {
     echo "Create Btrfs subvolumes and adjust fstab."
     echo "Usage: $scriptname {root-dev} {boot-dev} [{efi-dev}]"
@@ -46,13 +61,10 @@ create_subvols() {
 
     find -maxdepth 1 \! -name "@*" \! -name . -exec rm -Rf {} \;
 
-    subvols=(
-        @home @log @cache @tmp @libvirt
-        @flatpak @docker @containers @machines
-        @var_tmp @opt
-    )
+    for entry in "${subvols[@]}"; do
+        subvol=${entry%%:*}
+        mountdir=@${entry#*:}
 
-    for subvol in "${subvols[@]}"; do
         btrfs subvolume create "$subvol"
         mkdir -p "$subvol"
     done
