@@ -17,7 +17,6 @@ subvols=(
     @home:/home
     @log:/var/log
     @cache:/var/cache
-    @tmp:/tmp
     @libvirt:/var/lib/libvirt
     @flatpak:/var/lib/flatpak
     @docker:/var/lib/docker
@@ -68,7 +67,7 @@ create_subvols() {
         btrfs subvolume create "$subvol"
 
         if [ -d "$mountdir" ]; then
-            # Keep the original owner and mode (/tmp is 1777, /var/log is root:syslog 0775)
+            # Keep the original owner and mode (/var/tmp is 1777, /var/log is root:syslog 0775)
             chown --reference="$mountdir" "$subvol"
             chmod --reference="$mountdir" "$subvol"
             # Move the installed data, hidden files included, into the subvolume.
