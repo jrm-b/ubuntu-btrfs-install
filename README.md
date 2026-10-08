@@ -9,7 +9,7 @@
 This script creates Btrfs subvolumes (while still in Live CD/USB mode) for Ubuntu 24.04 (or newer) and compatible derivatives.
 
 - Creates Btrfs subvolumes:  
-  - `@home` `@log` `@cache` `@tmp` `@libvirt` `@flatpak` `@docker` `@containers` `@machines` `@var_tmp` `@opt` 
+  - `@home` `@log` `@cache` `@libvirt` `@flatpak` `@docker` `@containers` `@machines` `@var_tmp` `@opt` 
 
 ## Requirements
 
@@ -84,7 +84,7 @@ sda
 
 ```bash
 cd ~/Downloads
-wget https://raw.githubusercontent.com/diogopessoa/ubuntu-btrfs-install/main/ubuntu-btrfs-install.sh
+wget https://raw.githubusercontent.com/jrm-b/ubuntu-btrfs-install/main/ubuntu-btrfs-install.sh
 ```
 
 ### Make It Executable
